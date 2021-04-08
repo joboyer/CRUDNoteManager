@@ -28,11 +28,8 @@ class App extends Component {
   }
 
   addNote = async () => {
-    console.log(this.state.noteEditing)
-    console.log(typeof this.state.noteEditing)
     let notes = [...this.state.notes];
     if (this.state.noteEditing != null && typeof this.state.noteEditing === 'number') {
-      console.log("passe", notes)
       notes[this.state.noteEditing] = this.state.currentNote
       this.setState({ notes, currentNote: "", noteEditing: null });
       return
