@@ -1,95 +1,93 @@
-// Import React!
-import React from 'react'
-import { Editor } from 'slate-react'
-import { Value } from 'slate'
+import React, { Component } from "react";
+import "./App.css";
 
-const existingValue = JSON.parse(localStorage.getItem('content'))
-const initialValue = Value.fromJSON(
-  existingValue || {
-    document: {
-      nodes: [
-        {
-          object: 'block',
-          type: 'paragraph',
-          nodes: [
-            {
-              object: 'text',
-              text: 'A line of text in a paragraph.',
-            },
-          ],
-        },
-      ],
-    },
-  }
-)
+class App extends Component {
 
-function MarkHotkey(options) {
-  const { type, key } = options
-
-  // Return our "plugin" object, containing the `onKeyDown` handler.
-  return {
-    onKeyDown(event, editor, next) {
-      // If it doesn't match our `key`, let other plugins handle it.
-      if (!event.ctrlKey || event.key !== key) return next()
-
-      // Prevent the default characters from being inserted.
-      event.preventDefault()
-
-      // Toggle the mark `type`.
-      editor.toggleMark(type)
-    },
-  }
-}
-
-// Initialize a plugin for each mark...
-const plugins = [
-  MarkHotkey({ key: 'b', type: 'bold' }),
-  MarkHotkey({ key: '`', type: 'code' }),
-  MarkHotkey({ key: 'i', type: 'italic' }),
-  MarkHotkey({ key: '~', type: 'strikethrough' }),
-  MarkHotkey({ key: 'u', type: 'underline' }),
-]
-
-class App extends React.Component {
   state = {
-    value: initialValue,
+    notes: [],
+    currentNote: "",
+    noteEditing: null,
+    currentEdit: ""
+  };
+
+  componentDidMount() {
+    const json = localStorage.getItem("notes");
+    const notes = JSON.parse(json);
+    if (notes) {
+      this.setState(() => ({ notes }));
+    }
   }
 
-  onChange = ({ value }) => {
-    if (value.document !== this.state.value.document) {
-      const content = JSON.stringify(value.toJSON())
-      localStorage.setItem('content', content)
-    }
-    this.setState({ value })
+  componentDidUpdate(prevProps, prevState) {
+    this.state.notes.forEach((note, index) => {
+      if (prevState.notes[index] !== note) {
+        const json = JSON.stringify(this.state.notes);
+        localStorage.setItem("notes", json);
+      }
+    });
   }
+
+  addNote = async () => {
+    console.log(this.state.noteEditing)
+    console.log(typeof this.state.noteEditing)
+    let notes = [...this.state.notes];
+    if (this.state.noteEditing != null && typeof this.state.noteEditing === 'number') {
+      console.log("passe", notes)
+      notes[this.state.noteEditing] = this.state.currentNote
+      this.setState({ notes, currentNote: "", noteEditing: null });
+      return
+    }
+    notes.push(this.state.currentNote);
+    this.setState({ notes, currentNote: "" });
+  };
+
+  deleteNote = indexToDelete => {
+    let notes = [...this.state.notes].filter(
+      (note, index) => index !== indexToDelete
+    );
+    this.setState({ notes });
+  };
+
+  setNoteEditing = index => {
+    // this.setState({ noteEditing: index, currentEdit: this.state.notes[index] });
+    this.setState({ noteEditing: index, currentNote: this.state.notes[index] });
+  };
+
+  editNote = event => {
+    this.setState({ currentEdit: event.target.value });
+  };
+
+  submitEdit = index => {
+    let notes = [...this.state.notes];
+    notes[index] = this.state.currentEdit;
+    this.setState({ notes, noteEditing: null });
+  };
 
   render() {
     return (
-      <Editor
-        plugins={plugins}
-        value={this.state.value}
-        onChange={this.onChange}
-        renderMark={this.renderMark}
-      />
-    )
-  }
-
-  renderMark = (props, editor, next) => {
-    switch (props.mark.type) {
-      case 'bold':
-        return <strong>{props.children}</strong>
-      // Add our new mark renderers...
-      case 'code':
-        return <code>{props.children}</code>
-      case 'italic':
-        return <em>{props.children}</em>
-      case 'strikethrough':
-        return <del>{props.children}</del>
-      case 'underline':
-        return <u>{props.children}</u>
-      default:
-        return next()
-    }
+      <div className="App">
+        <h1>
+          <textarea
+            onChange={event => this.setState({ currentNote: event.target.value })}
+            value={this.state.currentNote}
+            className="input"
+            placeholder="Notes"
+          />
+          <br />
+          <button className="button" onClick={this.addNote}>Submit</button>
+        </h1>
+        {this.state.notes.map((note, index) => (
+          <div className="notes" key={index} onClick={() => this.setNoteEditing(index)}>
+            <div className="note">
+              <div className="note-content">
+                <div className="note-text">{note}</div>
+              </div>
+              <button onClick={() => this.deleteNote(index)}>Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 }
 
