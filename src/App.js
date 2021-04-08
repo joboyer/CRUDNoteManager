@@ -30,7 +30,7 @@ function MarkHotkey(options) {
   return {
     onKeyDown(event, editor, next) {
       // If it doesn't match our `key`, let other plugins handle it.
-      if (!event.ctrlKey || event.key != key) return next()
+      if (!event.ctrlKey || event.key !== key) return next()
 
       // Prevent the default characters from being inserted.
       event.preventDefault()
@@ -48,7 +48,6 @@ const plugins = [
   MarkHotkey({ key: 'i', type: 'italic' }),
   MarkHotkey({ key: '~', type: 'strikethrough' }),
   MarkHotkey({ key: 'u', type: 'underline' }),
-  MarkHotkey({ key: 's', type: 'save' }),
 ]
 
 class App extends React.Component {
@@ -57,15 +56,11 @@ class App extends React.Component {
   }
 
   onChange = ({ value }) => {
-    this.setState({ value })
-  }
-
-  onSave = ({ event, value }) => {
-    console.log(event);
-    if (value.document != this.state.value.document) {
+    if (value.document !== this.state.value.document) {
       const content = JSON.stringify(value.toJSON())
       localStorage.setItem('content', content)
     }
+    this.setState({ value })
   }
 
   render() {
@@ -75,7 +70,6 @@ class App extends React.Component {
         value={this.state.value}
         onChange={this.onChange}
         renderMark={this.renderMark}
-        onSave={this.onSave}
       />
     )
   }
