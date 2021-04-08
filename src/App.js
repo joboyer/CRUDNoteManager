@@ -3,22 +3,25 @@ import React from 'react'
 import { Editor } from 'slate-react'
 import { Value } from 'slate'
 
-const initialValue = Value.fromJSON({
-  document: {
-    nodes: [
-      {
-        object: 'block',
-        type: 'paragraph',
-        nodes: [
-          {
-            object: 'text',
-            text: 'A line of text in a paragraph.',
-          },
-        ],
-      },
-    ],
-  },
-})
+const existingValue = JSON.parse(localStorage.getItem('content'))
+const initialValue = Value.fromJSON(
+  existingValue || {
+    document: {
+      nodes: [
+        {
+          object: 'block',
+          type: 'paragraph',
+          nodes: [
+            {
+              object: 'text',
+              text: 'A line of text in a paragraph.',
+            },
+          ],
+        },
+      ],
+    },
+  }
+)
 
 function MarkHotkey(options) {
   const { type, key } = options
@@ -45,6 +48,7 @@ const plugins = [
   MarkHotkey({ key: 'i', type: 'italic' }),
   MarkHotkey({ key: '~', type: 'strikethrough' }),
   MarkHotkey({ key: 'u', type: 'underline' }),
+  MarkHotkey({ key: 's', type: 'save' }),
 ]
 
 class App extends React.Component {
@@ -56,6 +60,14 @@ class App extends React.Component {
     this.setState({ value })
   }
 
+  onSave = ({ event, value }) => {
+    console.log(event);
+    if (value.document != this.state.value.document) {
+      const content = JSON.stringify(value.toJSON())
+      localStorage.setItem('content', content)
+    }
+  }
+
   render() {
     return (
       <Editor
@@ -63,6 +75,7 @@ class App extends React.Component {
         value={this.state.value}
         onChange={this.onChange}
         renderMark={this.renderMark}
+        onSave={this.onSave}
       />
     )
   }
