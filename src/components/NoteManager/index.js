@@ -9,16 +9,10 @@ import './NoteManager.css';
 function MarkHotkey(options) {
     const { type, key } = options
 
-    // Return our "plugin" object, containing the `onKeyDown` handler.
     return {
         onKeyDown(event, editor, next) {
-            // If it doesn't match our `key`, let other plugins handle it.
             if (!event.ctrlKey || event.key !== key) return next()
-
-            // Prevent the default characters from being inserted.
             event.preventDefault()
-
-            // Toggle the mark `type`.
             editor.toggleMark(type)
         },
     }
@@ -63,31 +57,29 @@ class Messenger extends Component {
         value: initialValue,
         valueArray: [],
     }
-    // state = {
-    //     value: initialValue,
-    // }
 
-    componentDidMount = () => {
+    componentDidMount = async () => {
         const json = localStorage.getItem("notes");
-        const valueArray = localStorage.getItem("valueArray");
+
+        const valueArray = JSON.parse(localStorage.getItem("valueArray"))
         const notes = JSON.parse(json);
 
         if (notes) {
-            this.setState({ notes });
+            await this.setState({ notes });
         }
 
         if (valueArray) {
-            this.setState({ valueArray });
+            await this.setState({ valueArray: valueArray });
         }
     }
 
-    componentDidUpdate(prevProps, prevState) {
-        this.state.notes.forEach((note, index) => {
+    async componentDidUpdate(prevProps, prevState) {
+        await this.state.notes.forEach(async (note, index) => {
             if (prevState.notes[index] !== note && note !== "") {
                 const json = JSON.stringify(this.state.notes);
-                localStorage.setItem("notes", json);
+                await localStorage.setItem("notes", json);
                 const valueArray = JSON.stringify(this.state.valueArray);
-                localStorage.setItem("valueArray", valueArray);
+                await localStorage.setItem("valueArray", valueArray);
             }
         });
     }
@@ -99,10 +91,11 @@ class Messenger extends Component {
         this.setState({ notes });
     };
 
-    setNoteEditing = index => {
-        console.log(this.state.valueArray[index])
-        // this.setState({ noteEditing: index, currentEdit: this.state.notes[index] });
-        this.setState({ noteEditing: index, currentNote: this.state.notes[index], value: this.state.valueArray[index] });
+    setNoteEditing = async (index) => {
+        const value = Value.fromJSON(this.state.valueArray[index])
+        if (this.state.valueArray[index]) {
+            await this.setState({ noteEditing: index, currentNote: this.state.notes[index], value: value });
+        }
     };
 
     editNote = event => {
@@ -171,11 +164,6 @@ class Messenger extends Component {
                     />
                     <div className="note-edit-container" onChange={event => this.setState({ currentNote: event.target.value })}>
                         <h1>
-                            {/* <textarea
-                                onChange={event => this.setState({ currentNote: event.target.value })}
-                                value={this.state.currentNote}
-                                placeholder="Notes"
-                            /> */}
                             <Editor
                                 plugins={plugins}
                                 value={this.state.value}
