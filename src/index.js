@@ -1,8 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
+import './assets/index.css';
+import App from './components/App';
 import reportWebVitals from './reportWebVitals';
+// Import themify Icon
+import "./assets/themify-icons.css";
 
 ReactDOM.render(
   <React.StrictMode>
