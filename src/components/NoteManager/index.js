@@ -21,6 +21,7 @@ import LibraryAddIcon from '@material-ui/icons/LibraryAdd';
 import './NoteManager.css';
 
 
+// INIT VALUE
 const existingValue = JSON.parse(localStorage.getItem('content'))
 const initialValue = Value.fromJSON(
     existingValue || {
@@ -74,6 +75,7 @@ class NoteManager extends Component {
         classes: this.useStyle,
     }
 
+    // UPDATE state 
     componentDidMount = async () => {
         const json = localStorage.getItem("notes");
 
@@ -89,6 +91,8 @@ class NoteManager extends Component {
         }
     }
 
+
+    // UPDATE localstorage
     async componentDidUpdate(prevProps, prevState) {
 
         if (!this.state.notes.length) {
@@ -107,6 +111,8 @@ class NoteManager extends Component {
         await localStorage.setItem("valueArray", valueArray);
     }
 
+
+    // DELETE NOTE
     deleteNote = indexToDelete => {
         let notes = [...this.state.notes].filter(
             (note, index) => index !== indexToDelete
@@ -117,6 +123,8 @@ class NoteManager extends Component {
         this.setState({ notes, valueArray });
     };
 
+
+    // SELECT NOTE TO EDIT
     setNoteEditing = async (index) => {
         if (this.state.valueArray.length > 0) {
             const value = Value.fromJSON(this.state.valueArray[index])
@@ -126,6 +134,7 @@ class NoteManager extends Component {
         }
     };
 
+    // SAVE NOTE IN STATE
     saveNote = async () => {
         let notes = [...this.state.notes];
         let valueArray = [...this.state.valueArray];
@@ -143,6 +152,8 @@ class NoteManager extends Component {
         }
     }
 
+
+    // ADD NEW NOTE IN STATE
     addNewNote = () => {
         let notes = [...this.state.notes];
         let valueArray = [...this.state.valueArray];
@@ -157,6 +168,7 @@ class NoteManager extends Component {
         }
     }
 
+    // On change get the first line !empty
     onChange = ({ value }) => {
         if (value.document !== this.state.value.document) {
             const content = JSON.stringify(value.toJSON())
