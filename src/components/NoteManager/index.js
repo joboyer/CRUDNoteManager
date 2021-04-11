@@ -2,9 +2,44 @@
 import React, { Component } from "react";
 import { Editor } from 'slate-react'
 import { Value } from 'slate'
-import NoteListItem from '../NoteListItem';
-import Toolbar from '../Toolbar';
+import DeleteIcon from '@material-ui/icons/Delete';
+import Button from '@material-ui/core/Button';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import Paper from '@material-ui/core/Paper';
+import AppBarCp from '../AppBar';
+import FormatBoldIcon from '@material-ui/icons/FormatBold';
+import FormatItalicIcon from '@material-ui/icons/FormatItalic';
+import FormatUnderlinedIcon from '@material-ui/icons/FormatUnderlined';
+import ArchiveIcon from '@material-ui/icons/Archive';
+import Grid from '@material-ui/core/Grid';
+import Divider from '@material-ui/core/Divider';
+import BottomNavigation from '@material-ui/core/BottomNavigation';
+import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
+import LibraryAddIcon from '@material-ui/icons/LibraryAdd';
 import './NoteManager.css';
+
+
+const existingValue = JSON.parse(localStorage.getItem('content'))
+const initialValue = Value.fromJSON(
+    existingValue || {
+        document: {
+            nodes: [
+                {
+                    object: 'block',
+                    type: 'paragraph',
+                    nodes: [
+                        {
+                            object: 'text',
+                            text: 'A line of text in a paragraph.',
+                        },
+                    ],
+                },
+            ],
+        },
+    }
+)
 
 function MarkHotkey(options) {
     const { type, key } = options
@@ -27,26 +62,6 @@ const plugins = [
     MarkHotkey({ key: 'u', type: 'underline' }),
 ]
 
-const existingValue = JSON.parse(localStorage.getItem('content'))
-const initialValue = Value.fromJSON(
-    existingValue || {
-        document: {
-            nodes: [
-                {
-                    object: 'block',
-                    type: 'paragraph',
-                    nodes: [
-                        {
-                            object: 'text',
-                            text: 'A line of text in a paragraph.',
-                        },
-                    ],
-                },
-            ],
-        },
-    }
-)
-
 class Messenger extends Component {
 
     state = {
@@ -56,6 +71,7 @@ class Messenger extends Component {
         currentEdit: "",
         value: initialValue,
         valueArray: [],
+        classes: this.useStyle,
     }
 
     componentDidMount = async () => {
@@ -74,35 +90,43 @@ class Messenger extends Component {
     }
 
     async componentDidUpdate(prevProps, prevState) {
-        await this.state.notes.forEach(async (note, index) => {
-            if (prevState.notes[index] !== note && note !== "") {
-                const json = JSON.stringify(this.state.notes);
-                await localStorage.setItem("notes", json);
-                const valueArray = JSON.stringify(this.state.valueArray);
-                await localStorage.setItem("valueArray", valueArray);
-            }
-        });
+
+        if (!this.state.notes.length) {
+            await localStorage.setItem("notes", []);
+            await localStorage.removeItem("content")
+        } else {
+            await this.state.notes.forEach(async (note, index) => {
+                if (prevState.notes[index] !== note && note !== "") {
+                    const json = JSON.stringify(this.state.notes);
+                    await localStorage.setItem("notes", json);
+                }
+            });
+        }
+
+        const valueArray = await JSON.stringify(this.state.valueArray);
+        await localStorage.setItem("valueArray", valueArray);
     }
 
     deleteNote = indexToDelete => {
         let notes = [...this.state.notes].filter(
             (note, index) => index !== indexToDelete
         );
-        this.setState({ notes });
+        let valueArray = [...this.state.valueArray].filter(
+            (value, index) => index !== indexToDelete
+        );
+        this.setState({ notes, valueArray });
     };
 
     setNoteEditing = async (index) => {
-        const value = Value.fromJSON(this.state.valueArray[index])
-        if (this.state.valueArray[index]) {
-            await this.setState({ noteEditing: index, currentNote: this.state.notes[index], value: value });
+        if (this.state.valueArray.length > 0) {
+            const value = Value.fromJSON(this.state.valueArray[index])
+            if (this.state.valueArray[index]) {
+                await this.setState({ noteEditing: index, currentNote: this.state.notes[index], value: value });
+            }
         }
     };
 
-    editNote = event => {
-        this.setState({ currentEdit: event.target.value });
-    }
-
-    addNote = async () => {
+    saveNote = async () => {
         let notes = [...this.state.notes];
         let valueArray = [...this.state.valueArray];
 
@@ -110,12 +134,26 @@ class Messenger extends Component {
             if (this.state.noteEditing != null && typeof this.state.noteEditing === 'number') {
                 notes[this.state.noteEditing] = this.state.currentNote
                 valueArray[this.state.noteEditing] = this.state.value
-                await this.setState({ notes: notes, valueArray: valueArray, currentNote: "", noteEditing: null });
+                await this.setState({ notes: notes, valueArray: valueArray, currentNote: "" });
                 return
             }
             await notes.push(this.state.currentNote);
             await valueArray.push(this.state.value);
-            await this.setState({ notes: notes, valueArray: valueArray, currentNote: "" });
+            await this.setState({ notes: notes, valueArray: valueArray, currentNote: "", noteEditing: notes.length - 1 });
+        }
+    }
+
+    addNewNote = () => {
+        let notes = [...this.state.notes];
+        let valueArray = [...this.state.valueArray];
+
+        notes.push('A line of text in a paragraph.');
+        valueArray.push(initialValue);
+        const index = notes.length - 1
+        const value = Value.fromJSON(valueArray[index])
+
+        if (valueArray[index]) {
+            this.setState({ noteEditing: index, currentNote: notes[index], value: value, notes: notes, valueArray: valueArray });
         }
     }
 
@@ -138,44 +176,58 @@ class Messenger extends Component {
     render() {
         return (
             <div className="note-manager" >
-                <div className="scrollable sidebar">
+                <div className="sidebar scrollable">
+                    <AppBarCp
+                        title="Note Manager"
+                    />
+                    <BottomNavigation className="menu">
+                        <BottomNavigationAction onClick={this.addNewNote} label="Recents" value="recents" icon={<LibraryAddIcon />} />
+                    </BottomNavigation>
                     <div className="note-list">
-                        <Toolbar
-                            title="Note Manager"
-                        />
                         {
                             this.state.notes.map((note, index) => (
-                                <div className="note-list-item" key={index} onClick={() => this.setNoteEditing(index)}>
-                                    <button className="note-photo" onClick={() => this.deleteNote(index)}>
-                                        <i className="ti-close"></i>
-                                    </button>
-                                    < NoteListItem
-                                        key={index}
-                                        data={note}
-                                    />
-                                </div>
+                                // key={`${note}${index}`}
+                                <ListItem button key={index} onClick={() => this.setNoteEditing(index)}>
+                                    <ListItemIcon>
+                                        <Button onClick={() => this.deleteNote(index)}>
+                                            <DeleteIcon />
+                                        </Button>
+                                    </ListItemIcon>
+                                    <ListItemText primary={note} />
+                                </ListItem>
                             ))
+
                         }
                     </div>
                 </div>
-                <div className="scrollable content" onChange={event => this.setState({ currentNote: event.target.value })}>
-                    <Toolbar
+
+                <div className="content" onChange={event => this.setState({ currentNote: event.target.value })}>
+                    <AppBarCp
                         title="Edit Note"
                     />
+                    <Grid container alignItems="center" className="grid-option">
+                        <Divider orientation="vertical" flexItem />
+                        <Button onClick={() => { this.editor.toggleMark('bold') }}><FormatBoldIcon /></Button>
+                        <Button onClick={() => { this.editor.toggleMark('italic') }}> <FormatItalicIcon /></Button>
+                        <Button onClick={() => { this.editor.toggleMark('underline') }}><FormatUnderlinedIcon /></Button>
+                        <Divider orientation="vertical" flexItem />
+                        <Button onClick={this.saveNote} ><ArchiveIcon /></Button>
+
+                    </Grid>
                     <div className="note-edit-container" onChange={event => this.setState({ currentNote: event.target.value })}>
-                        <h1>
+                        <Paper elevation={0}>
                             <Editor
                                 plugins={plugins}
                                 value={this.state.value}
                                 onChange={this.onChange}
                                 renderMark={this.renderMark}
+                                ref={editor => this.editor = editor}
                             />
-                            <br />
-                            <button className="button" onClick={this.addNote}>Submit</button>
-                        </h1>
+                        </Paper>
+                        <br />
                     </div>
                 </div>
-            </div>
+            </div >
         )
     }
 
