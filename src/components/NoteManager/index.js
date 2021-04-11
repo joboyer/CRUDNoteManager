@@ -62,7 +62,7 @@ const plugins = [
     MarkHotkey({ key: 'u', type: 'underline' }),
 ]
 
-class Messenger extends Component {
+class NoteManager extends Component {
 
     state = {
         notes: [],
@@ -250,4 +250,4 @@ class Messenger extends Component {
     }
 }
 
-export default Messenger
+export default NoteManager
