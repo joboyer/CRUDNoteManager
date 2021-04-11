@@ -1,2 +1,2 @@
 # CRUDNoteManager
-CRUDNoteManager
+launch `yarn && yarn start`
