@@ -18,6 +18,7 @@ import Divider from '@material-ui/core/Divider';
 import BottomNavigation from '@material-ui/core/BottomNavigation';
 import BottomNavigationAction from '@material-ui/core/BottomNavigationAction';
 import LibraryAddIcon from '@material-ui/icons/LibraryAdd';
+import Tooltip from '@material-ui/core/Tooltip';
 import './NoteManager.css';
 
 
@@ -223,7 +224,7 @@ class NoteManager extends Component {
                         <Button onClick={() => { this.editor.toggleMark('italic') }}> <FormatItalicIcon /></Button>
                         <Button onClick={() => { this.editor.toggleMark('underline') }}><FormatUnderlinedIcon /></Button>
                         <Divider orientation="vertical" flexItem />
-                        <Button onClick={this.saveNote} ><ArchiveIcon /></Button>
+                        <Tooltip title="Save note" placement="right"><Button onClick={this.saveNote} ><ArchiveIcon /></Button></Tooltip>
 
                     </Grid>
                     <div className="note-edit-container" onChange={event => this.setState({ currentNote: event.target.value })}>
